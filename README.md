@@ -1,5 +1,3 @@
-# embeddedSentry
-
 This repository contains my implementation of the NYU embedded systems challenge of Fall 2024. In a nutshell, the objective of the challenge was to develop a gesture-based authentication system using an STM32f429iDiscovery board. 
 
 In a more technical sense:
