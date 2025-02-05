@@ -6,3 +6,5 @@ In a more technical sense:
 
 Attached to this reposity you will find the source code, a debug file I frequently used during testing, as well as a video demo in the form of a YT video. Configuration, as well as package manegement, was all done in the back end thanks to the help of platformIO. 
 
+Demo Link: https://youtube.com/shorts/1AWfBEZszOg
+
