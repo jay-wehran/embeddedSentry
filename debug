@@ -1,0 +1,271 @@
+
+//! Motion Detection Test - incase gyro fails on boot
+// // Gyroscope and LCD setup
+// SPI spi(PF_9, PF_8, PF_7);   // MOSI, MISO, SCLK
+// DigitalOut cs(PC_1);          // Chip Select
+// LCD_DISCO_F429ZI lcd;         // LCD object
+
+// // Constants
+// const float MOTION_THRESHOLD = 0.5f;  // Threshold in rad/s for motion detection
+// const int STABILIZATION_DELAY_MS = 1000;  // Time below threshold to consider stabilization
+// const int FILTER_SIZE = 5;  // Number of samples for the moving average
+
+// // Timer for motion stabilization
+// Timer stabilizationTimer;
+
+// // Buffer for moving average
+// std::vector<float> magnitudeBuffer(FILTER_SIZE, 0.0f);
+
+// // Function Prototypes
+// void configureGyro();
+// void readGyroData(float &gx, float &gy, float &gz);
+// float calculateMovingAverage(float newSample);
+
+// // Function to configure gyroscope
+// void configureGyro() {
+//     cs = 0;
+//     spi.write(0x20); // CTRL_REG1
+//     spi.write(0x6F); // Enable X/Y/Z, power on, 100 Hz
+//     cs = 1;
+
+//     cs = 0;
+//     spi.write(0x23); // CTRL_REG4
+//     spi.write(0x30); // High-resolution, ±2000 dps
+//     cs = 1;
+// }
+
+// // Function to read gyroscope data
+// void readGyroData(float &gx, float &gy, float &gz) {
+//     uint8_t buffer[6];
+
+//     cs = 0;
+//     spi.write(0x28 | 0x80 | 0x40); // Read starting at OUT_X_L with auto-increment
+//     for (int i = 0; i < 6; i++) {
+//         buffer[i] = spi.write(0x00);
+//     }
+//     cs = 1;
+
+//     gx = ((int16_t)((buffer[1] << 8) | buffer[0])) * 0.07f * 0.0174533f; // Convert to rad/s
+//     gy = ((int16_t)((buffer[3] << 8) | buffer[2])) * 0.07f * 0.0174533f;
+//     gz = ((int16_t)((buffer[5] << 8) | buffer[4])) * 0.07f * 0.0174533f;
+// }
+
+// // Function to calculate moving average
+// float calculateMovingAverage(float newSample) {
+//     magnitudeBuffer.push_back(newSample);
+//     if (magnitudeBuffer.size() > FILTER_SIZE) {
+//         magnitudeBuffer.erase(magnitudeBuffer.begin());
+//     }
+//     float sum = std::accumulate(magnitudeBuffer.begin(), magnitudeBuffer.end(), 0.0f);
+//     return sum / magnitudeBuffer.size();
+// }
+
+// int main() {
+//     float gx, gy, gz;
+//     bool motionDetected = false;
+
+//     // Initialize SPI and LCD
+//     spi.format(8, 3);
+//     spi.frequency(1000000);
+//     cs = 1;
+
+//     lcd.Clear(LCD_COLOR_BLUE);
+//     lcd.SetBackColor(LCD_COLOR_BLUE);
+//     lcd.SetTextColor(LCD_COLOR_WHITE);
+//     lcd.DisplayStringAt(0, LINE(2), (uint8_t *)"GYROSCOPE DATA", CENTER_MODE);
+//     lcd.DisplayStringAt(0, LINE(3), (uint8_t *)"Waiting for Motion...", CENTER_MODE);
+
+//     // Configure gyroscope
+//     configureGyro();
+
+//     // Start the timer
+//     stabilizationTimer.start();
+
+//     // Main loop
+//     while (1) {
+//         readGyroData(gx, gy, gz);
+
+//         // Calculate magnitude of motion
+//         float magnitude = sqrt(gx * gx + gy * gy + gz * gz);
+
+//         // Apply moving average filter
+//         float smoothedMagnitude = calculateMovingAverage(magnitude);
+
+//         if (!motionDetected && smoothedMagnitude > MOTION_THRESHOLD) {
+//             motionDetected = true; // Threshold exceeded
+//             lcd.Clear(LCD_COLOR_GREEN);
+//             lcd.DisplayStringAt(0, LINE(5), (uint8_t *)"Motion Detected", CENTER_MODE);
+//             stabilizationTimer.reset(); // Reset the stabilization timer
+//         }
+
+//         if (motionDetected && smoothedMagnitude < MOTION_THRESHOLD) {
+//             if (stabilizationTimer.elapsed_time().count() >= STABILIZATION_DELAY_MS) {
+//                 motionDetected = false; // Stabilization confirmed
+//                 lcd.Clear(LCD_COLOR_BLUE);
+//                 lcd.DisplayStringAt(0, LINE(5), (uint8_t *)"Motion Stabilized", CENTER_MODE);
+//             }
+//         } else if (smoothedMagnitude >= MOTION_THRESHOLD) {
+//             stabilizationTimer.reset(); // Reset stabilization timer if threshold exceeded again
+//         }
+
+//         ThisThread::sleep_for(100ms); // Adjust polling rate
+//     }
+// }
+
+
+
+// // LCD and Touchscreen objects
+// LCD_DISCO_F429ZI lcd;
+// TS_DISCO_F429ZI ts;
+
+// int main() {
+//     TS_StateTypeDef TS_State;
+//     uint8_t status;
+
+//     // Initialize LCD
+//     BSP_LCD_SetFont(&Font20);
+//     lcd.Clear(LCD_COLOR_BLUE);
+//     lcd.SetBackColor(LCD_COLOR_BLUE);
+//     lcd.SetTextColor(LCD_COLOR_WHITE);
+//     lcd.DisplayStringAt(0, LINE(2), (uint8_t *)"GYROSCOPE PROJECT", CENTER_MODE);
+
+//     // Initialize Touchscreen
+//     status = ts.Init(lcd.GetXSize(), lcd.GetYSize());
+//     if (status != TS_OK) {
+//         lcd.Clear(LCD_COLOR_RED);
+//         lcd.SetBackColor(LCD_COLOR_RED);
+//         lcd.SetTextColor(LCD_COLOR_WHITE);
+//         lcd.DisplayStringAt(0, LINE(5), (uint8_t *)"TOUCH INIT FAIL", CENTER_MODE);
+//         while (1); // Halt if touchscreen initialization fails
+//     }
+
+//     // Display "Enter Password" screen
+//     lcd.Clear(LCD_COLOR_BLUE);
+//     lcd.SetBackColor(LCD_COLOR_BLUE);
+//     lcd.SetTextColor(LCD_COLOR_WHITE);
+//     lcd.DisplayStringAt(0, LINE(5), (uint8_t *)"Enter Password", CENTER_MODE);
+//     lcd.DisplayStringAt(0, LINE(7), (uint8_t *)"Tap Anywhere", CENTER_MODE);
+//     lcd.DisplayStringAt(0, LINE(8), (uint8_t *)"To Begin", CENTER_MODE);
+
+//     // Wait for touch input
+//     while (1) {
+//         ts.GetState(&TS_State); // Get touchscreen state
+//         if (TS_State.TouchDetected) {
+//             lcd.Clear(LCD_COLOR_GREEN);
+//             lcd.SetBackColor(LCD_COLOR_GREEN);
+//             lcd.SetTextColor(LCD_COLOR_WHITE);
+//             lcd.DisplayStringAt(0, LINE(5), (uint8_t *)"Capturing Motion", CENTER_MODE);
+//             ThisThread::sleep_for(1s);
+
+//             // Transition to motion capture stage
+//             break;
+//         }
+//         ThisThread::sleep_for(100ms); // Reduce polling frequency
+//     }
+// }
+
+
+
+
+
+
+
+
+// //! Gyro capturing code
+// #define CTRL_REG1 0x20
+// #define CTRL_REG1_CONFIG 0x6F // Enable X/Y/Z, power on, 100 Hz
+// #define CTRL_REG4 0x23
+// #define CTRL_REG4_CONFIG 0x30 // High-resolution, ±2000 dps
+// #define OUT_X_L 0x28 // X-axis output low byte register
+// #define SENSITIVITY 0.07f // Sensitivity for ±2000 dps in mdps/digit
+// #define DEG_TO_RAD 0.0174533f // Conversion factor from degrees to radians
+
+// SPI and LCD setup
+// SPI spi(PF_9, PF_8, PF_7); // MOSI, MISO, SCLK
+// DigitalOut cs(PC_1);        // Chip Select
+// LCD_DISCO_F429ZI lcd;
+
+// Function to write a value to a register
+// void writeRegister(uint8_t reg, uint8_t value) {
+//     cs = 0;
+//     spi.write(reg);
+//     spi.write(value);
+//     cs = 1;
+// }
+
+// Function to read a register
+// uint8_t readRegister(uint8_t reg) {
+//     cs = 0;
+//     spi.write(reg | 0x80); // Set read bit
+//     uint8_t value = spi.write(0x00);
+//     cs = 1;
+//     return value;
+// }
+
+// Function to configure gyroscope
+// void configureGyro() {
+//     writeRegister(CTRL_REG1, CTRL_REG1_CONFIG);
+//     ThisThread::sleep_for(100ms);
+//     writeRegister(CTRL_REG4, CTRL_REG4_CONFIG);
+//     ThisThread::sleep_for(100ms);
+// }
+
+// Function to read gyroscope data
+// void readGyroData(int16_t &x, int16_t &y, int16_t &z) {
+//     uint8_t buffer[6];
+
+//     cs = 0;
+//     spi.write(OUT_X_L | 0x80 | 0x40); // Read starting at OUT_X_L with auto-increment
+//     for (int i = 0; i < 6; i++) {
+//         buffer[i] = spi.write(0x00);
+//     }
+//     cs = 1;
+
+//     x = (int16_t)((buffer[1] << 8) | buffer[0]);
+//     y = (int16_t)((buffer[3] << 8) | buffer[2]);
+//     z = (int16_t)((buffer[5] << 8) | buffer[4]);
+// }
+
+// Function to display gyroscope data
+// void displayGyroData(int16_t x, int16_t y, int16_t z) {
+//     char text[50];
+
+    // Convert raw values to scaled integers for rad/s
+//     int scaled_gx = (int)(x * SENSITIVITY * DEG_TO_RAD * 1000); // Scale to preserve 3 decimal places
+//     int scaled_gy = (int)(y * SENSITIVITY * DEG_TO_RAD * 1000);
+//     int scaled_gz = (int)(z * SENSITIVITY * DEG_TO_RAD * 1000);
+
+    // Display scaled values on LCD
+//     sprintf(text, "X: %d.%03d rad/s", scaled_gx / 1000, abs(scaled_gx % 1000));
+//     lcd.DisplayStringAt(0, LINE(5), (uint8_t *)text, LEFT_MODE);
+
+//     sprintf(text, "Y: %d.%03d rad/s", scaled_gy / 1000, abs(scaled_gy % 1000));
+//     lcd.DisplayStringAt(0, LINE(6), (uint8_t *)text, LEFT_MODE);
+
+//     sprintf(text, "Z: %d.%03d rad/s", scaled_gz / 1000, abs(scaled_gz % 1000));
+//     lcd.DisplayStringAt(0, LINE(7), (uint8_t *)text, LEFT_MODE);
+// }
+
+// int main() {
+//     int16_t x, y, z;
+
+    // Initialize SPI and LCD
+//     spi.format(8, 3);
+//     spi.frequency(1000000);
+//     cs = 1;
+
+//     lcd.Clear(LCD_COLOR_BLUE);
+//     lcd.SetBackColor(LCD_COLOR_BLUE);
+//     lcd.SetTextColor(LCD_COLOR_WHITE);
+//     lcd.DisplayStringAt(0, LINE(2), (uint8_t *)"GYROSCOPE DATA", CENTER_MODE);
+
+    // Configure gyroscope
+//     configureGyro();
+
+    // Main loop
+//     while (1) {
+//         readGyroData(x, y, z);     // Read raw gyroscope data
+//         displayGyroData(x, y, z); // Convert and display data
+//         ThisThread::sleep_for(500ms);
+//     }
+// }
